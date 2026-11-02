@@ -21,6 +21,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 // tr_extensions.c - extensions needed by the renderer not in sdl_glimp.c
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/html5_webgl.h>
+#endif
 #ifdef USE_LOCAL_HEADERS
 #include "SDL.h"
 #else
@@ -73,7 +76,17 @@ void GLimp_InitExtraExtensions(void) {
 			glRefConfig.occlusionQueryTarget = GL_ANY_SAMPLES_PASSED;
 
 			if (qglesMajorVersion >= 3) {
+#ifdef __EMSCRIPTEN__
+				// Emscripten's SDL_GL_GetProcAddress() strips suffixes and checks WebGL 1 first, so "glGenQueries" resolves to
+				// the EXT_disjoint_timer_query entry point (glGenQueriesEXT), which crashes on WebGL 2. Ask for the WebGL 2 core one.
+#undef GLE
+#define GLE(ret, name, ...) qgl##name = (name##proc *) emscripten_webgl2_get_proc_address("gl" #name);
 				QGL_ARB_occlusion_query_PROCS;
+#undef GLE
+#define GLE(ret, name, ...) qgl##name = (name##proc *) SDL_GL_GetProcAddress("gl" #name);
+#else
+				QGL_ARB_occlusion_query_PROCS;
+#endif
 			} else {
 				// GL_EXT_occlusion_query_boolean uses EXT suffix
 #undef GLE

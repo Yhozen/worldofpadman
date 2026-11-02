@@ -1226,9 +1226,12 @@ void IN_Frame(void) {
 	if (!cls.glconfig.isFullscreen && (Key_GetCatcher() & KEYCATCH_CONSOLE)) {
 		// Console is down in windowed mode
 		IN_DeactivateMouse(cls.glconfig.isFullscreen);
+#ifndef __EMSCRIPTEN__
 	} else if (!cls.glconfig.isFullscreen && loading) {
 		// Loading in windowed mode
 		IN_DeactivateMouse(cls.glconfig.isFullscreen);
+#endif
+	/* Browser: keep the pointer lock across map loads; re-locking needs a fresh user click. */
 	} else if (!(SDL_GetWindowFlags(SDL_window) & SDL_WINDOW_INPUT_FOCUS)) {
 		// Window not got focus
 		IN_DeactivateMouse(cls.glconfig.isFullscreen);

@@ -21,6 +21,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "server.h"
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 /*
 ===============================================================================
@@ -163,6 +166,18 @@ static void SV_Map_f(void) {
 	// a typo at the server console won't end the game
 	Com_sprintf(expanded, sizeof(expanded), "maps/%s.bsp", map);
 	if (FS_ReadFile(expanded, NULL) == -1) {
+#ifdef __EMSCRIPTEN__
+		/* Browser build: ask the page to fetch the per-map pk3; it rescans the search path
+		   (FS_WebRescan) and re-runs this exact command when the pak is in MEMFS. */
+		if (EM_ASM_INT({
+				if (!Module.wopFetchServerMap) return 0;
+				Module.wopFetchServerMap(UTF8ToString($0), UTF8ToString($1));
+				return 1;
+			}, map, Cmd_Cmd())) {
+			Com_Printf("Map %s not available locally, fetching its pak...\n", map);
+			return;
+		}
+#endif
 		Com_Printf("Can't find map %s\n", expanded);
 		return;
 	}

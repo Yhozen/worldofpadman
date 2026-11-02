@@ -3656,6 +3656,15 @@ void FS_Restart(int checksumFeed) {
 	Q_strncpyz(lastValidGame, fs_gamedirvar->string, sizeof(lastValidGame));
 }
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+/* Browser build: rebuild the search path after the page wrote a new pk3 into MEMFS. */
+EMSCRIPTEN_KEEPALIVE void FS_WebRescan(void) {
+	Com_Printf("FS_WebRescan: rescanning pk3 files\n");
+	FS_Restart(fs_checksumFeed);
+}
+#endif
+
 /*
 =================
 FS_ConditionalRestart

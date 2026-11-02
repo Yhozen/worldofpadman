@@ -2088,6 +2088,58 @@ void CL_NextDownload(void) {
 	CL_DownloadsComplete();
 }
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+/*
+ * Browser build: on-demand map paks. When the server's map is not in the search path,
+ * ask the page (Module.wopFetchMapPak) to fetch wop_map-<name>_1.7.0.pk3 into MEMFS while we
+ * sit in CA_CONNECTED (like a download), then CL_WebPakReady() rescans and continues.
+ */
+static qboolean cl_webMapPending = qfalse;
+
+EMSCRIPTEN_KEEPALIVE void CL_WebPakReady(int ok) {
+	if (!cl_webMapPending)
+		return;
+	cl_webMapPending = qfalse;
+	if (clc.state != CA_CONNECTED)
+		return;
+	if (ok)
+		FS_Restart(clc.checksumFeed);
+	CL_DownloadsComplete();
+}
+
+/* Called from the page's pagehide handler so servers see a real "disconnect" (the browser
+   never runs another frame after the tab closes, so Cbuf "disconnect" would never execute). */
+EMSCRIPTEN_KEEPALIVE void CL_WebDisconnect(void) {
+	if (clc.state >= CA_CONNECTED && !clc.demoplaying)
+		CL_Disconnect(qfalse);
+}
+
+static qboolean CL_WebFetchMissingMap(void) {
+	const char *info = cl.gameState.stringData + cl.gameState.stringOffsets[CS_SERVERINFO];
+	const char *map = Info_ValueForKey(info, "mapname");
+	char bsp[MAX_QPATH];
+	int started;
+
+	if (!map[0] || clc.demoplaying)
+		return qfalse;
+	Com_sprintf(bsp, sizeof(bsp), "maps/%s.bsp", map);
+	if (FS_ReadFile(bsp, NULL) > 0)
+		return qfalse;
+	started = EM_ASM_INT({
+		if (!Module.wopFetchMapPak) return 0;
+		Module.wopFetchMapPak(UTF8ToString($0));
+		return 1;
+	}, map);
+	if (!started)
+		return qfalse;
+	Com_Printf("Map %s not available locally, fetching its pak...\n", map);
+	cl_webMapPending = qtrue;
+	clc.state = CA_CONNECTED;
+	return qtrue;
+}
+#endif
+
 /*
 =================
 CL_InitDownloads
@@ -2098,6 +2150,11 @@ and determine if we need to download them
 */
 void CL_InitDownloads(void) {
 	char missingfiles[1024];
+
+#ifdef __EMSCRIPTEN__
+	if (CL_WebFetchMissingMap())
+		return;
+#endif
 
 	if (!(cl_allowDownload->integer & DLF_ENABLE)) {
 		// autodownload is disabled on the client

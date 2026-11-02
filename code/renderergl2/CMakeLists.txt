@@ -91,10 +91,10 @@ if (USE_RENDERER_DLOPEN)
 	list(APPEND SRCS
 		../qcommon/q_shared.c
 		../qcommon/q_math.c
-		../renderercommon/puff.c
 		../renderercommon/tr_subs.c
 	)
 endif()
+list(APPEND SRCS ../renderercommon/puff.c)
 
 project(renderer_opengl2)
 set(STATIC FALSE)
