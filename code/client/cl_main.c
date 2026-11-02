@@ -2118,22 +2118,26 @@ EMSCRIPTEN_KEEPALIVE void CL_WebDisconnect(void) {
 static qboolean CL_WebFetchMissingMap(void) {
 	const char *info = cl.gameState.stringData + cl.gameState.stringOffsets[CS_SERVERINFO];
 	const char *map = Info_ValueForKey(info, "mapname");
+	int gametype = atoi(Info_ValueForKey(info, "g_gametype"));
 	char bsp[MAX_QPATH];
+	qboolean haveMap;
 	int started;
 
 	if (!map[0] || clc.demoplaying)
 		return qfalse;
 	Com_sprintf(bsp, sizeof(bsp), "maps/%s.bsp", map);
-	if (FS_ReadFile(bsp, NULL) > 0)
-		return qfalse;
+	haveMap = FS_ReadFile(bsp, NULL) > 0;
+	// Always ask the page: besides the map pak it may need extra paks for the game mode (team skins).
+	// It answers through CL_WebPakReady(loadedSomething); nothing new loaded -> no FS_Restart.
 	started = EM_ASM_INT({
 		if (!Module.wopFetchMapPak) return 0;
-		Module.wopFetchMapPak(UTF8ToString($0));
+		Module.wopFetchMapPak(UTF8ToString($0), $1, $2);
 		return 1;
-	}, map);
+	}, map, gametype, haveMap);
 	if (!started)
 		return qfalse;
-	Com_Printf("Map %s not available locally, fetching its pak...\n", map);
+	if (!haveMap)
+		Com_Printf("Map %s not available locally, fetching its pak...\n", map);
 	cl_webMapPending = qtrue;
 	clc.state = CA_CONNECTED;
 	return qtrue;
