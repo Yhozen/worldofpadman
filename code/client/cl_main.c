@@ -2129,17 +2129,20 @@ static qboolean CL_WebFetchMissingMap(void) {
 	haveMap = FS_ReadFile(bsp, NULL) > 0;
 	// Always ask the page: besides the map pak it may need extra paks for the game mode (team skins).
 	// It answers through CL_WebPakReady(loadedSomething); nothing new loaded -> no FS_Restart.
+	// Set the pending state first: the page may answer synchronously from inside the EM_ASM call.
+	cl_webMapPending = qtrue;
+	clc.state = CA_CONNECTED;
 	started = EM_ASM_INT({
 		if (!Module.wopFetchMapPak) return 0;
 		Module.wopFetchMapPak(UTF8ToString($0), $1, $2);
 		return 1;
 	}, map, gametype, haveMap);
-	if (!started)
+	if (!started) {
+		cl_webMapPending = qfalse;
 		return qfalse;
+	}
 	if (!haveMap)
 		Com_Printf("Map %s not available locally, fetching its pak...\n", map);
-	cl_webMapPending = qtrue;
-	clc.state = CA_CONNECTED;
 	return qtrue;
 }
 #endif
