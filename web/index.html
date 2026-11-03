@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>World of PADMAN</title>
+  <style>
+    :root { color-scheme: dark; font: 16px system-ui, sans-serif; background: #101726; color: #eef4ff; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; }
+    main { width: min(1200px, 96vw); }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    h1 { font-size: 1.6rem; } button { font: inherit; padding: .6rem 1.2rem; border: 0; border-radius: .4rem; cursor: pointer; background: #58c9ff; color: #101726; }
+    button:disabled { opacity: .5; cursor: wait; }
+    canvas { display: block; width: 100%; aspect-ratio: 16/9; background: #000; outline: none; }
+    #status { min-height: 1.5em; } progress { width: 100%; accent-color: #58c9ff; }
+    small, footer { color: #abbad1; } footer { padding: 1rem 0; font-size: .85rem; }
+    a { color: #58c9ff; } details { margin: 1rem 0; } pre { max-height: 12rem; overflow: auto; white-space: pre-wrap; font-size: .75rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <header><h1>World of PADMAN</h1><div><button id="play">Play</button> <button id="fullscreen" hidden>Fullscreen</button></div></header>
+    <p id="status" role="status">Play in your browser. The first visit downloads the game; maps load as you play.</p>
+    <progress id="progress" value="0" max="1" hidden></progress>
+    <canvas id="canvas" width="1280" height="720" tabindex="0" aria-label="World of PADMAN game"></canvas>
+    <p><small>WASD to move · Mouse to look · Click to capture the mouse · Esc for the menu. Desktop browser with WebGL 2 required.</small></p>
+    <details><summary>Game log</summary><pre id="log"></pre></details>
+    <footer>World of PADMAN by <a href="https://worldofpadman.net/" rel="noreferrer">PadWorld Entertainment</a> · <a href="https://github.com/Yhozen/worldofpadman">Source &amp; licenses</a></footer>
+  </main>
+  <script type="module" src="/loader.js"></script>
+</body>
+</html>

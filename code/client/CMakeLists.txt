@@ -63,7 +63,6 @@ set(SRCS
 
 if (WIN32)
 	list(APPEND SRCS ../sys/sys_win32.c)
-	list(APPEND SRCS ../sys/con_passive.c)
 	list(APPEND SRCS ../sys/win_resource.rc)
 	if (USE_HTTP)
 		list(APPEND SRCS cl_http_windows.c)
@@ -74,11 +73,17 @@ else()
 		list(APPEND SRCS ../sys/sys_osx.m)
 	endif()
 	list(APPEND SRCS ../sys/sys_unix.c)
-	list(APPEND SRCS ../sys/con_tty.c)
 	if (USE_HTTP)
 		list(APPEND SRCS cl_http_curl.c)
 		list(APPEND SRCS ../server/sv_http_curl.c)
 	endif()
+endif()
+
+# Reading Emscripten's emulated terminal opens a blocking browser input dialog.
+if (WIN32 OR EMSCRIPTEN)
+	list(APPEND SRCS ../sys/con_passive.c)
+else()
+	list(APPEND SRCS ../sys/con_tty.c)
 endif()
 
 if (USE_MUMBLE)
