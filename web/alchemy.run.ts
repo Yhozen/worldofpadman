@@ -24,6 +24,7 @@ export default Alchemy.Stack("WopWeb", {
 }, Effect.gen(function* () {
   const { stage } = yield* Alchemy.Stack;
   if (stage !== "preview") return yield* Effect.die(new Error("Deploy this stack with --stage preview"));
+  const publicPreview = process.env.WOP_PUBLIC_PREVIEW === "1";
   const upload = yield* Effect.tryPromise(async () => JSON.parse(
     await readFile(new URL("./.build/upload.json", import.meta.url), "utf8")) as Upload).pipe(Effect.orDie);
   const bucket = yield* Cloudflare.R2.Bucket("Assets", { publicAccess: false });
@@ -39,11 +40,14 @@ export default Alchemy.Stack("WopWeb", {
     access: {
       name: "World of PADMAN private preview",
       allowedIdps: [login.identityProviderId.as<string>()], autoRedirectToIdentity: true,
-      sessionDuration: "24h", policies: [{ decision: "allow", include: allowedEmails.map((email) => ({ email })) }],
+      sessionDuration: "24h", policies: publicPreview
+        ? [{ decision: "bypass", include: ["everyone"] }]
+        : [{ decision: "allow", include: allowedEmails.map((email) => ({ email })) }],
     },
     cache: { enabled: true, crossVersionCache: true },
     entrypoints: { default: { cache: { enabled: false } }, Assets: { cache: { enabled: true } } },
-    env: { BUCKET: bucket, ALLOWED_EMAILS: allowedEmails.join(","), RELEASE_ID: published.releaseId },
+    env: { BUCKET: bucket, ALLOWED_EMAILS: allowedEmails.join(","),
+      PUBLIC_PREVIEW: String(publicPreview), RELEASE_ID: published.releaseId },
     observability: { enabled: true },
   });
   return { url: game.url, bucketName: bucket.bucketName, releaseId: published.releaseId };

@@ -22,7 +22,28 @@ test("anonymous, forged and unlisted identities cannot reach the shell or cached
   }
   const denied = await gateway(request(), env, { exports, access: { getIdentity: async () => ({ email: "other@test.net" }) } }, shell);
   assert.equal(denied.status, 403);
+  for (const PUBLIC_PREVIEW of ["false", "1", "TRUE", ""]) {
+    assert.equal((await gateway(request(), { ...env, PUBLIC_PREVIEW }, { exports }, shell)).status, 403);
+  }
   assert.equal(calls, 0);
+});
+
+test("explicit public preview serves the shell and assets without an Access identity", async () => {
+  const publicEnv = { ...env, PUBLIC_PREVIEW: "true" };
+  let calls = 0;
+  const ctx = {
+    access: { getIdentity: async () => { throw new Error("Public requests must not resolve identity"); } },
+    exports: { Assets: { fetch: async () => { calls++; return new Response("wasm"); } } },
+  };
+  const response = await gateway(request("/"), publicEnv, ctx, shell);
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), "PADMAN ✓");
+  assert.equal(response.headers.get("Cache-Control"), "no-store");
+  const asset = await gateway(request(), publicEnv, ctx, shell);
+  assert.equal(asset.status, 200);
+  assert.equal(await asset.text(), "wasm");
+  assert.equal(calls, 1);
+  assert.equal((await gateway(request("/", { method: "POST" }), publicEnv, ctx, shell)).status, 405);
 });
 
 test("authorized shell is uncached and allows WebAssembly; HEAD has no body", async () => {

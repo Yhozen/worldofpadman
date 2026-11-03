@@ -78,5 +78,18 @@ After deploy, anonymous requests to both the custom domain and `workers.dev` sho
 Access (or receive the Worker's 403). Sign in with an allowlisted email, click Play, start a local map,
 and verify another map loads. `X-Wop-Asset-Cache` reports the internal cache status on asset responses.
 
+For temporary public beta testing, deploy with `WOP_PUBLIC_PREVIEW=1`. This bypasses both the
+Cloudflare Access sign-in policy and the Worker's email check; anyone with the URL can play.
+The R2 bucket stays private. Restore private access by deploying again without the flag:
+
+```sh
+WOP_PUBLIC_PREVIEW=1 pnpm alchemy deploy --stage preview --profile default
+# When testing is finished:
+WOP_PUBLIC_PREVIEW=0 pnpm alchemy deploy --stage preview --profile default
+```
+
+This changes access to the existing release without rebuilding game assets. Public mode stays active
+until the private deployment runs; it does not expire automatically.
+
 Game code and artwork retain the licenses in the repository's `COPYING.md`, `GPL-2.0.md`,
 `LICENSES.md` and `MAPPACK.md`.

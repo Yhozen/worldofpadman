@@ -40,12 +40,14 @@ export const shellHeaders = {
   "Content-Security-Policy": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
 };
 
-export async function gateway(request: Request, env: { ALLOWED_EMAILS: string }, ctx: GatewayContext, shell: Shell): Promise<Response> {
-  try {
-    const identity = await ctx.access?.getIdentity();
-    const allowed = env.ALLOWED_EMAILS.split(",").map((email) => email.trim().toLowerCase());
-    if (!identity?.email || !allowed.includes(identity.email.trim().toLowerCase())) return failure("Access required", 403);
-  } catch { return failure("Could not verify access", 503); }
+export async function gateway(request: Request, env: { ALLOWED_EMAILS: string; PUBLIC_PREVIEW?: string }, ctx: GatewayContext, shell: Shell): Promise<Response> {
+  if (env.PUBLIC_PREVIEW !== "true") {
+    try {
+      const identity = await ctx.access?.getIdentity();
+      const allowed = env.ALLOWED_EMAILS.split(",").map((email) => email.trim().toLowerCase());
+      if (!identity?.email || !allowed.includes(identity.email.trim().toLowerCase())) return failure("Access required", 403);
+    } catch { return failure("Could not verify access", 503); }
+  }
   if (request.method !== "GET" && request.method !== "HEAD") return failure("Method not allowed", 405);
   const url = new URL(request.url);
   try {
