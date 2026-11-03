@@ -52,7 +52,7 @@ const Module = window.Module = {
   arguments: ["+set", "fs_basepath", "/game", "+set", "fs_homepath", "/home/web",
     "+set", "sv_pure", "0", "+set", "vm_game", "2", "+set", "vm_cgame", "2", "+set", "vm_ui", "2",
     "+set", "r_mode", "-1", "+set", "r_customwidth", "1280", "+set", "r_customheight", "720",
-    "+set", "r_fullscreen", "0", "+set", "ttycon", "0", "+set", "com_hunkMegs", "256"],
+    "+set", "r_fullscreen", "0", "+set", "com_hunkMegs", "256"],
   locateFile: (filename) => filename.endsWith(".wasm") ? release.assets["wop.wasm"].url : filename,
   onAbort: failure,
   onRuntimeInitialized() {

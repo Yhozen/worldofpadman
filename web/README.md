@@ -48,6 +48,9 @@ failures. Artifact tests cover deterministic releases, invalid filenames, and up
 The GitHub `Web preview` workflow builds from source and runs these checks on pull requests.
 With the local server running, `CHROME_PATH=/path/to/chrome pnpm test:browser` also starts the real
 engine, loads a map, and restarts it through the already-loaded path in headless Chrome.
+It fails immediately on any browser dialog and checks that animation frames keep advancing;
+Playwright's automatic dialog dismissal cannot hide a blocked engine. CI also runs this browser check.
+The Emscripten client uses the passive console instead of reading the browser's emulated terminal.
 Set `SCREENSHOT` to save a screenshot.
 
 ## Deploy
