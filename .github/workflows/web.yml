@@ -1,0 +1,47 @@
+name: Web preview
+
+on:
+  pull_request:
+    paths:
+      - 'web/**'
+      - 'code/**'
+      - 'libs/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/web.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'code/**'
+      - 'libs/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/web.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: '4.0.10'
+      - run: pnpm install --frozen-lockfile
+        working-directory: web
+      - run: pnpm build
+        working-directory: web
+      - run: pnpm check && pnpm test
+        working-directory: web

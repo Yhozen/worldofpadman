@@ -1,0 +1,5 @@
+/node_modules/
+/.alchemy/
+/.build/
+/dist/
+__pycache__/

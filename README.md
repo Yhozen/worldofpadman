@@ -51,6 +51,9 @@ World of PADMAN is powered by a modified id Tech 3 graphics engine based on [ioq
 
 ## Building from source
 
+The `web-port` branch also supports a WebGL 2 browser client. See [web/README.md](web/README.md)
+for the source build, local preview, and private Cloudflare deployment at `wop.rccpr.tech`.
+
 Make sure that you've cloned the repository with [git-lfs](https://git-lfs.com/) installed.
 
 The dependencies for World of PADMAN are bundled in this repository. Usually you don't have to install any other dependency - just the compiler and [cmake](https://cmake.org/).
