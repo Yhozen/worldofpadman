@@ -97,6 +97,17 @@ void Cbuf_AddText(const char *text) {
 	cmd_text.cursize += l;
 }
 
+#ifdef __EMSCRIPTEN__
+// Take ownership of the remaining commands while an asynchronous map loads.
+char *Cbuf_TakeText(void) {
+	char *text = Z_Malloc(cmd_text.cursize + 1);
+	Com_Memcpy(text, cmd_text.data, cmd_text.cursize);
+	text[cmd_text.cursize] = '\0';
+	cmd_text.cursize = 0;
+	return text;
+}
+#endif
+
 /*
 ============
 Cbuf_InsertText

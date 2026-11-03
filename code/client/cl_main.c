@@ -131,6 +131,12 @@ static char cl_reconnectArgs[MAX_OSPATH];
 char cl_oldGame[MAX_QPATH];
 qboolean cl_oldGameSet;
 
+#ifdef __EMSCRIPTEN__
+static qboolean cl_webMapPending;
+static int cl_webMapResult;
+static unsigned int cl_webMapGeneration, cl_webMapRequestGeneration;
+#endif
+
 // Structure containing functions exported from refresh DLL
 refexport_t re;
 #ifdef USE_RENDERER_DLOPEN
@@ -1173,7 +1179,11 @@ void CL_MapLoading(void) {
 	Key_SetCatcher(0);
 
 	// if we are already connected to the local host, stay connected
-	if (clc.state >= CA_CONNECTED && !Q_stricmp(clc.servername, "localhost")) {
+	if (clc.state >= CA_CONNECTED && !Q_stricmp(clc.servername, "localhost")
+#ifdef __EMSCRIPTEN__
+		&& !cl_webMapPending // Reconnect to obtain a fresh gamestate during a download.
+#endif
+	) {
 		clc.state = CA_CONNECTED; // so the connect screen is drawn
 		Com_Memset(cls.updateInfoString, 0, sizeof(cls.updateInfoString));
 		Com_Memset(clc.serverMessage, 0, sizeof(clc.serverMessage));
@@ -1207,6 +1217,10 @@ void CL_ClearState(void) {
 
 	//	S_StopAllSounds();
 
+#ifdef __EMSCRIPTEN__
+	// An outstanding page callback belongs to the previous gamestate.
+	cl_webMapGeneration++;
+#endif
 	Com_Memset(&cl, 0, sizeof(cl));
 }
 
@@ -2093,19 +2107,12 @@ void CL_NextDownload(void) {
 /*
  * Browser build: on-demand map paks. When the server's map is not in the search path,
  * ask the page (Module.wopFetchMapPak) to fetch wop_map-<name>_1.7.0.pk3 into MEMFS while we
- * sit in CA_CONNECTED (like a download), then CL_WebPakReady() rescans and continues.
+ * sit in CA_CONNECTED (like a download), then CL_WebPakReady() lets CL_Frame resume loading.
  */
-static qboolean cl_webMapPending = qfalse;
-
 EMSCRIPTEN_KEEPALIVE void CL_WebPakReady(int ok) {
-	if (!cl_webMapPending)
-		return;
-	cl_webMapPending = qfalse;
-	if (clc.state != CA_CONNECTED)
-		return;
-	if (ok)
-		FS_Restart(clc.checksumFeed);
-	CL_DownloadsComplete();
+	// Loading can raise Com_Error; leave it to the next engine frame.
+	if (cl_webMapPending)
+		cl_webMapResult = !!ok;
 }
 
 /* Called from the page's pagehide handler so servers see a real "disconnect" (the browser
@@ -2125,13 +2132,24 @@ static qboolean CL_WebFetchMissingMap(void) {
 
 	if (!map[0] || clc.demoplaying)
 		return qfalse;
+	clc.state = CA_CONNECTED;
+	// The page's callback has no request ID. Drain the old request before starting
+	// another, so its answer cannot complete a replacement connection/gamestate.
+	if (cl_webMapPending)
+		return qtrue;
+	// A download may have finished after disconnecting, before this gamestate.
+	if (cl_webMapResult > 0) {
+		cl_webMapResult = 0;
+		FS_Restart(clc.checksumFeed);
+	}
 	Com_sprintf(bsp, sizeof(bsp), "maps/%s.bsp", map);
 	haveMap = FS_ReadFile(bsp, NULL) > 0;
 	// Always ask the page: besides the map pak it may need extra paks for the game mode (team skins).
 	// It answers through CL_WebPakReady(loadedSomething); nothing new loaded -> no FS_Restart.
 	// Set the pending state first: the page may answer synchronously from inside the EM_ASM call.
 	cl_webMapPending = qtrue;
-	clc.state = CA_CONNECTED;
+	cl_webMapResult = -1;
+	cl_webMapRequestGeneration = cl_webMapGeneration;
 	started = EM_ASM_INT({
 		if (!Module.wopFetchMapPak) return 0;
 		Module.wopFetchMapPak(UTF8ToString($0), $1, $2);
@@ -2721,6 +2739,23 @@ void CL_Frame(int msec) {
 	if (!com_cl_running->integer) {
 		return;
 	}
+
+#ifdef __EMSCRIPTEN__
+	if (cl_webMapPending && cl_webMapResult >= 0) {
+		cl_webMapPending = qfalse;
+		if (clc.state == CA_CONNECTED && cl.gameState.stringOffsets[CS_SERVERINFO]) {
+			if (cl_webMapResult) {
+				cl_webMapResult = 0;
+				FS_Restart(clc.checksumFeed);
+			}
+			if (cl_webMapRequestGeneration != cl_webMapGeneration) {
+				CL_InitDownloads();
+			} else {
+				CL_DownloadsComplete();
+			}
+		}
+	}
+#endif
 
 #ifdef USE_HTTP
 	if (clc.httpUsed) {

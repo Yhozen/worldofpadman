@@ -378,6 +378,10 @@ void Cbuf_Init(void);
 void Cbuf_AddText(const char *text);
 // Adds command text at the end of the buffer, does NOT add a final \n
 
+#ifdef __EMSCRIPTEN__
+char *Cbuf_TakeText(void); // Caller must Z_Free the returned text.
+#endif
+
 void Cbuf_ExecuteText(int exec_when, const char *text);
 // this can be used in place of either Cbuf_AddText or Cbuf_InsertText
 
