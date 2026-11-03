@@ -4,6 +4,7 @@ import { createReadStream } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { shellHeaders } from "../src/http.ts";
 const build = fileURLToPath(new URL("../.build/", import.meta.url));
 const upload = JSON.parse(await readFile(join(build, "upload.json"), "utf8"));
 const routes = new Map(upload.files.map((file) => [`/${file.key}`, file]));
@@ -16,7 +17,7 @@ const server = createServer(async (request, response) => {
   if (!file || !["GET", "HEAD"].includes(request.method)) { response.writeHead(404).end(); return; }
   try {
     const info = await stat(file.path);
-    response.writeHead(200, { "Content-Type": file.contentType, "Content-Length": info.size, "Cache-Control": "no-store" });
+    response.writeHead(200, { ...(!file.sha256 ? shellHeaders : {}), "Content-Type": file.contentType, "Content-Length": info.size, "Cache-Control": "no-store" });
     if (request.method === "HEAD") response.end();
     else createReadStream(file.path).pipe(response);
   } catch { response.writeHead(500).end(); }

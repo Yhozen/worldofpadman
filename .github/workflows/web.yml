@@ -6,6 +6,8 @@ on:
       - 'web/**'
       - 'code/**'
       - 'libs/**'
+      - 'wop/**'
+      - 'cmake/**'
       - 'CMakeLists.txt'
       - '.github/workflows/web.yml'
   push:
@@ -14,6 +16,8 @@ on:
       - 'web/**'
       - 'code/**'
       - 'libs/**'
+      - 'wop/**'
+      - 'cmake/**'
       - 'CMakeLists.txt'
       - '.github/workflows/web.yml'
 

@@ -42,12 +42,13 @@ and includes 65 maps. Browser caching avoids repeating unchanged downloads.
 Use a desktop browser with WebGL 2, keyboard and mouse. This deployment supports local play with bots;
 connecting to native UDP multiplayer servers requires a separate WebSocket-to-UDP relay.
 
-The static local server binds to loopback and does not simulate Access. HTTP tests cover the real
+The static local server binds to loopback, uses the production CSP, and does not simulate Access. HTTP tests cover the real
 Worker gateway, forged identities, authorization before cache lookup, headers, ETags, and storage
 failures. Artifact tests cover deterministic releases, invalid filenames, and upload integrity checks.
 The GitHub `Web preview` workflow builds from source and runs these checks on pull requests.
 With the local server running, `CHROME_PATH=/path/to/chrome pnpm test:browser` also starts the real
-engine and loads a map in headless Chrome. Set `SCREENSHOT` to save a screenshot.
+engine, loads a map, and restarts it through the already-loaded path in headless Chrome.
+Set `SCREENSHOT` to save a screenshot.
 
 ## Deploy
 
