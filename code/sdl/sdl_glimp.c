@@ -740,9 +740,14 @@ static int GLimp_SetMode(int mode, qboolean fullscreen, qboolean noborder, qbool
 		qglClear(GL_COLOR_BUFFER_BIT);
 		SDL_GL_SwapWindow(SDL_window);
 
+#ifndef __EMSCRIPTEN__
+		/* On Emscripten SDL maps swap interval 0 to emscripten_set_main_loop_timing(SETTIMEOUT),
+		   which (once the main loop exists, i.e. on vid_restart) moves Com_Frame off
+		   requestAnimationFrame. The browser always vsyncs, so keep RAF timing. */
 		if (SDL_GL_SetSwapInterval(r_swapInterval->integer) == -1) {
 			ri.Printf(PRINT_DEVELOPER, "SDL_GL_SetSwapInterval failed: %s\n", SDL_GetError());
 		}
+#endif
 
 		SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &realColorBits[0]);
 		SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &realColorBits[1]);

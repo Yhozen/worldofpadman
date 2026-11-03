@@ -35,7 +35,9 @@ set(QCOMMON_VM_SRCS
 	${CMAKE_CURRENT_SOURCE_DIR}/qcommon/vm_interpreted.c
 	${CMAKE_CURRENT_SOURCE_DIR}/qcommon/vm_local.h
 )
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+if(EMSCRIPTEN)
+	add_compile_definitions(NO_VM_COMPILED)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
 	list(APPEND QCOMMON_VM_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/qcommon/vm_aarch64.c)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
 	list(APPEND QCOMMON_VM_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/qcommon/vm_armv7l.c)

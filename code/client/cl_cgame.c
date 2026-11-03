@@ -350,7 +350,11 @@ static void CL_CM_LoadMap(const char *mapname) {
 }
 
 static void CL_GetVoipTimes(int *times) {
+#ifdef USE_VOIP
 	memcpy(times, clc.voipLastPacket, sizeof(int) * MAX_CLIENTS);
+#else
+	memset(times, 0, sizeof(int) * MAX_CLIENTS);
+#endif
 }
 
 /*

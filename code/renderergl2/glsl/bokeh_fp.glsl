@@ -52,33 +52,33 @@ void main()
 	gl_FragColor = color * 0.04166667 * u_Color;
 #endif
 
-	float c[5];
+	// WoP web: constant-indexed local float arrays crash SwiftShader (headless Chrome); use scalars
 
-	c[0] = 1.0;
-	c[1] = 0.9238795325;
-	c[2] = 0.7071067812;
-	c[3] = 0.3826834324;
-	c[4] = 0.0;
+	const float c0 = 1.0;
+	const float c1 = 0.9238795325;
+	const float c2 = 0.7071067812;
+	const float c3 = 0.3826834324;
+	const float c4 = 0.0;
 
-	tc = var_TexCoords + u_InvTexRes * vec2(  c[0],  c[4]);  color =  texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2(  c[1],  c[3]);  color += texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2(  c[2],  c[2]);  color += texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2(  c[3],  c[1]);  color += texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2(  c[4],  c[0]);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2(  c0,  c4);  color =  texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2(  c1,  c3);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2(  c2,  c2);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2(  c3,  c1);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2(  c4,  c0);  color += texture2D(u_TextureMap, tc);
 
-	tc = var_TexCoords + u_InvTexRes * vec2(  c[1], -c[3]);  color += texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2(  c[2], -c[2]);  color += texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2(  c[3], -c[1]);  color += texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2(  c[4], -c[0]);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2(  c1, -c3);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2(  c2, -c2);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2(  c3, -c1);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2(  c4, -c0);  color += texture2D(u_TextureMap, tc);
 
-	tc = var_TexCoords + u_InvTexRes * vec2( -c[0],  c[4]);  color += texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2( -c[1],  c[3]);  color += texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2( -c[2],  c[2]);  color += texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2( -c[3],  c[1]);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2( -c0,  c4);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2( -c1,  c3);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2( -c2,  c2);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2( -c3,  c1);  color += texture2D(u_TextureMap, tc);
 
-	tc = var_TexCoords + u_InvTexRes * vec2( -c[1], -c[3]);  color += texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2( -c[2], -c[2]);  color += texture2D(u_TextureMap, tc);
-	tc = var_TexCoords + u_InvTexRes * vec2( -c[3], -c[1]);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2( -c1, -c3);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2( -c2, -c2);  color += texture2D(u_TextureMap, tc);
+	tc = var_TexCoords + u_InvTexRes * vec2( -c3, -c1);  color += texture2D(u_TextureMap, tc);
 	
 	gl_FragColor = color * 0.0625 * u_Color;
 }

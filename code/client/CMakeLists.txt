@@ -89,7 +89,9 @@ project(wop)
 wop_add_executable(TARGET ${PROJECT_NAME} WINDOWED SRCS ${SRCS})
 add_asm(${PROJECT_NAME})
 add_botlib(${PROJECT_NAME})
-add_dependencies(${PROJECT_NAME} cgame qagame ui ${RENDERER_LIST})
+if (NOT EMSCRIPTEN)
+	add_dependencies(${PROJECT_NAME} cgame qagame ui ${RENDERER_LIST})
+endif()
 add_backward(${PROJECT_NAME})
 set(CLIENT_DEFINES)
 set(LIBS opusfile opus vorbis theora zlib openal SDL2::SDL2 SDL2::SDL2main ${CMAKE_DL_LIBS})
@@ -138,4 +140,14 @@ else()
 endif()
 if (CLIENT_DEFINES)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE ${CLIENT_DEFINES})
+endif()
+
+if (EMSCRIPTEN)
+	set(WOP_WEB_LINK_OPTIONS
+		-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sSTACK_SIZE=5MB
+		-sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -lopenal -lidbfs.js
+		-sEXPORTED_RUNTIME_METHODS=FS,IDBFS,addRunDependency,removeRunDependency,ccall,cwrap
+		-sEXPORTED_FUNCTIONS=_main,_Cbuf_AddText,_CL_WebPakReady,_CL_WebDisconnect,_FS_WebRescan
+		CACHE STRING "Emscripten link options for the WoP web client")
+	target_link_options(${PROJECT_NAME} PRIVATE ${WOP_WEB_LINK_OPTIONS})
 endif()

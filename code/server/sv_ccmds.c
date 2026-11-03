@@ -21,6 +21,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "server.h"
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+static char *sv_webMapCommands;
+static char sv_webMapName[MAX_QPATH];
+#endif
 
 /*
 ===============================================================================
@@ -163,6 +168,25 @@ static void SV_Map_f(void) {
 	// a typo at the server console won't end the game
 	Com_sprintf(expanded, sizeof(expanded), "maps/%s.bsp", map);
 	if (FS_ReadFile(expanded, NULL) == -1) {
+#ifdef __EMSCRIPTEN__
+		/* Browser build: ask the page to fetch the per-map pk3; it rescans the search path
+		   (FS_WebRescan) and re-runs this exact command when the pak is in MEMFS. */
+		if (sv_webMapCommands)
+			Z_Free(sv_webMapCommands);
+		sv_webMapCommands = Cbuf_TakeText();
+		Q_strncpyz(sv_webMapName, map, sizeof(sv_webMapName));
+		if (EM_ASM_INT({
+				if (!Module.wopFetchServerMap) return 0;
+				Module.wopFetchServerMap(UTF8ToString($0), UTF8ToString($1));
+				return 1;
+			}, map, Cmd_Cmd())) {
+			Com_Printf("Map %s not available locally, fetching its pak...\n", map);
+			return;
+		}
+		Cbuf_ExecuteText(EXEC_INSERT, sv_webMapCommands);
+		Z_Free(sv_webMapCommands);
+		sv_webMapCommands = NULL;
+#endif
 		Com_Printf("Can't find map %s\n", expanded);
 		return;
 	}
@@ -212,6 +236,14 @@ static void SV_Map_f(void) {
 	} else {
 		Cvar_Set("sv_cheats", "0");
 	}
+#ifdef __EMSCRIPTEN__
+	if (sv_webMapCommands) {
+		if (!Q_stricmp(sv_webMapName, mapname))
+			Cbuf_ExecuteText(EXEC_INSERT, sv_webMapCommands);
+		Z_Free(sv_webMapCommands);
+		sv_webMapCommands = NULL;
+	}
+#endif
 }
 
 /*
